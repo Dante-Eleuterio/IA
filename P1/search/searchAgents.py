@@ -289,7 +289,8 @@ class CornersProblem(search.SearchProblem):
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
-
+        self.startingGameState = startingGameState
+        
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
@@ -377,9 +378,20 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    
+    point = state[0]
+    visited = state[1]
+    notVisited = []
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    for corner in corners:
+        if corner not in visited:
+            notVisited.append(corner)
+    
+    value=[0]
+    for corner in notVisited:
+        value.append(mazeDistance(point,corner,problem.startingGameState))
+    
+    return max(value)
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
