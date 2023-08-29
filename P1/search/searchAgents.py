@@ -42,6 +42,8 @@ import util
 import time
 import search
 import pacman
+import heapq
+from util import manhattanDistance
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -290,7 +292,7 @@ class CornersProblem(search.SearchProblem):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         self.startingGameState = startingGameState
-        
+
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
@@ -379,18 +381,15 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
     
-    point = state[0]
+    point = state[0] 
     visited = state[1]
     notVisited = []
-
     for corner in corners:
         if corner not in visited:
             notVisited.append(corner)
-    
     value=[0]
     for corner in notVisited:
         value.append(mazeDistance(point,corner,problem.startingGameState))
-    
     return max(value)
 
 class AStarCornersAgent(SearchAgent):
@@ -415,6 +414,7 @@ class FoodSearchProblem:
         self._expanded = 0 # DO NOT CHANGE
         self.heuristicInfo = {} # A dictionary for the heuristic to store information
 
+  
     def getStartState(self):
         return self.start
 
@@ -483,9 +483,15 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+   
+    pacmanPosition, foodGrid = state[0], state[1]
+    foodList = foodGrid.asList()
+    if not foodList:
+        return 0
+    max_distance = max(mazeDistance(pacmanPosition, food,problem.startingGameState) for food in foodList)
+    return max_distance
+
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
