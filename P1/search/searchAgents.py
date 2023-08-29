@@ -511,19 +511,25 @@ class ClosestDotSearchAgent(SearchAgent):
         print('Path found with cost %d.' % len(self.actions))
 
     def findPathToClosestDot(self, gameState: pacman.GameState):
-        """
-        Returns a path (a list of actions) to the closest dot, starting from
-        gameState.
-        """
-        # Here are some useful elements of the startState
         startPosition = gameState.getPacmanPosition()
         food = gameState.getFood()
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        frontier = util.Queue()
+        explored = set()
+        startNode = problem.getStartState()
+        frontier.push((startNode, []))
+        while not frontier.isEmpty():
+            currentState, actions = frontier.pop()
+            if problem.isGoalState(currentState):
+                return actions
+            if currentState not in explored:
+                explored.add(currentState)
+                successors = problem.getSuccessors(currentState)
+                for successor, action, _ in successors:
+                    newActions = actions + [action]
+                    frontier.push((successor, newActions))
+        return [] 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
     A search problem for finding a path to any food.
@@ -555,10 +561,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         The state is Pacman's position. Fill this in with a goal test that will
         complete the problem definition.
         """
-        x,y = state
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        x, y = state
+        return self.food[x][y]  # Check if there's food at the given position
 
 def mazeDistance(point1: Tuple[int, int], point2: Tuple[int, int], gameState: pacman.GameState) -> int:
     """
