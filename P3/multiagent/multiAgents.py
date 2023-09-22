@@ -153,8 +153,64 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Initialize the action and value
+        best_action = None
+        best_value = float("-inf")
+
+        # Get the legal actions for Pacman (agent 0)
+        legal_actions = gameState.getLegalActions(0)
+
+        # Iterate over legal actions and find the one with the maximum value
+        for action in legal_actions:
+            successor = gameState.generateSuccessor(0, action)
+            value = self.min_value(successor, 1, 0)  # Start with the first ghost (agent 1)
+            if value > best_value:
+                best_value = value
+                best_action = action
+
+        return best_action
+    
+    def max_value(self, gameState, depth):
+        # Check if the game is over or if we have reached the specified depth
+        if gameState.isWin() or gameState.isLose() or depth == self.depth:
+            return self.evaluationFunction(gameState)
+
+        # Initialize the value as negative infinity
+        value = float("-inf")
+        
+        # Get the legal actions for Pacman (agent 0)
+        legal_actions = gameState.getLegalActions(0)
+
+        # Iterate over legal actions and find the maximum value
+        for action in legal_actions:
+            successor = gameState.generateSuccessor(0, action)
+            value = max(value, self.min_value(successor, 1, depth))
+
+        return value
+
+    def min_value(self, gameState, agent_index, depth):
+        # Check if the game is over or if we have reached the specified depth
+        if gameState.isWin() or gameState.isLose() or depth == self.depth:
+            return self.evaluationFunction(gameState)
+
+        # Initialize the value as positive infinity
+        value = float("inf")
+
+        # Get the legal actions for the current ghost
+        legal_actions = gameState.getLegalActions(agent_index)
+
+        # If the current agent is the last ghost, move on to the next depth (Pacman's turn)
+        if agent_index == gameState.getNumAgents() - 1:
+            for action in legal_actions:
+                successor = gameState.generateSuccessor(agent_index, action)
+                value = min(value, self.max_value(successor, depth + 1))
+        else:
+            # Otherwise, continue to the next ghost's turn
+            for action in legal_actions:
+                successor = gameState.generateSuccessor(agent_index, action)
+                value = min(value, self.min_value(successor, agent_index + 1, depth))
+
+        return value
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
