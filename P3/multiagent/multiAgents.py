@@ -265,19 +265,50 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             alpha = max(alpha, score)
         return chosen_action
 class ExpectimaxAgent(MultiAgentSearchAgent):
-    """
-      Your expectimax agent (question 4)
-    """
+    def getAction(self, gameState):
+        # Max level function for Pacman
+        def max_value(gameState, depth):
+            current_depth = depth + 1
+            if gameState.isWin() or gameState.isLose() or current_depth == self.depth:
+                return self.evaluate(gameState)
+            max_val = float("-inf")
+            possible_actions = gameState.getLegalActions(0)
+            for action in possible_actions:
+                successor = gameState.generateSuccessor(0, action)
+                max_val = max(max_val, exp_value(successor, current_depth, 1))
+            return max_val
 
-    def getAction(self, gameState: GameState):
-        """
-        Returns the expectimax action using self.depth and self.evaluationFunction
+        # Expectation level function for ghosts
+        def exp_value(gameState, depth, agentIndex):
+            exp_val = 0.0
+            if gameState.isWin() or gameState.isLose():
+                return self.evaluate(gameState)
+            possible_actions = gameState.getLegalActions(agentIndex)
+            probability = 1.0 / len(possible_actions)
+            for action in possible_actions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                if agentIndex == (gameState.getNumAgents() - 1):
+                    exp_val += max_value(successor, depth) * probability
+                else:
+                    exp_val += exp_value(successor, depth, agentIndex + 1) * probability
+            return exp_val
 
-        All ghosts should be modeled as choosing uniformly at random from their
-        legal moves.
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Find the best action using expectimax
+        possible_actions = gameState.getLegalActions(0)
+        best_score = float("-inf")
+        chosen_action = ''
+        for action in possible_actions:
+            next_state = gameState.generateSuccessor(0, action)
+            score = exp_value(next_state, 0, 1)
+            if score > best_score:
+                chosen_action = action
+                best_score = score
+        return chosen_action
+
+    def evaluate(self, gameState):
+        # Custom evaluation function for the game state
+        # You can implement your evaluation logic here
+        return gameState.getScore()
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
