@@ -63,11 +63,9 @@ class RegressionModel(object):
         self.hidden_size = 512
         self.learning_rate = 0.05
 
-        # Input layer to hidden layer
         self.weights1 = nn.Parameter(1, self.hidden_size)
         self.bias1 = nn.Parameter(1, self.hidden_size)
 
-        # Hidden layer to output layer
         self.weights2 = nn.Parameter(self.hidden_size,1)
         self.bias2 = nn.Parameter(1, 1)
         
@@ -110,7 +108,6 @@ class RegressionModel(object):
             loss = self.get_loss(x, y)
             gradients = nn.gradients(loss, [self.weights1, self.bias1, self.weights2, self.bias2])
 
-            # Update parameters using gradient descent
             self.weights1.update(gradients[0], -self.learning_rate)
             self.bias1.update(gradients[1], -self.learning_rate)
             self.weights2.update(gradients[2], -self.learning_rate)
@@ -138,11 +135,9 @@ class DigitClassificationModel(object):
         self.hidden_size = 200
         self.learning_rate = 0.5
 
-        # Input layer to hidden layer
         self.weights1 = nn.Parameter(784, self.hidden_size)
         self.bias1 = nn.Parameter(1, self.hidden_size)
 
-        # Hidden layer to output layer
         self.weights2 = nn.Parameter(self.hidden_size, 10)
         self.bias2 = nn.Parameter(1, 10)
 
@@ -162,7 +157,6 @@ class DigitClassificationModel(object):
         """
         hidden_layer = nn.ReLU(nn.AddBias(nn.Linear(x, self.weights1), self.bias1))
 
-        # Hidden layer to output layer
         output_layer = nn.AddBias(nn.Linear(hidden_layer, self.weights2), self.bias2)
 
         return output_layer
@@ -188,15 +182,15 @@ class DigitClassificationModel(object):
         """
         Trains the model.
         """
-        max_epochs = 20  # You can adjust the number of epochs as needed
-        target_accuracy = 0.975  # Set a higher threshold for validation accuracy
+        max_epochs = 20  
+        target_accuracy = 0.975  
         count=0
         for epoch in range(max_epochs):
             for x, y in dataset.iterate_forever(100):
                 loss = self.get_loss(x, y)
                 gradients = nn.gradients(loss, [self.weights1, self.bias1, self.weights2, self.bias2])
                 count+=1
-                # Update parameters using gradient descent
+                
                 self.weights1.update(gradients[0], -self.learning_rate)
                 self.bias1.update(gradients[1], -self.learning_rate)
                 self.weights2.update(gradients[2], -self.learning_rate)
@@ -206,7 +200,6 @@ class DigitClassificationModel(object):
                     break
                     
             validation_accuracy = dataset.get_validation_accuracy()
-            print(validation_accuracy)
             if validation_accuracy >= target_accuracy:
                 return
 
@@ -230,7 +223,15 @@ class LanguageIDModel(object):
         self.languages = ["English", "Spanish", "Finnish", "Dutch", "Polish"]
 
         # Initialize your model parameters here
-        "*** YOUR CODE HERE ***"
+        self.hidden_size = 64
+        self.learning_rate = 0.01
+
+        self.weights_hh = nn.Parameter(self.hidden_size, self.hidden_size)
+        self.weights_xh = nn.Parameter(47, self.hidden_size)  
+        self.bias_h = nn.Parameter(1, self.hidden_size)
+
+        self.weights_out = nn.Parameter(self.hidden_size, 5)  
+        self.bias_out = nn.Parameter(1, 5)
 
     def run(self, xs):
         """
@@ -261,7 +262,14 @@ class LanguageIDModel(object):
             A node with shape (batch_size x 5) containing predicted scores
                 (also called logits)
         """
-        "*** YOUR CODE HERE ***"
+        h_t = nn.ReLU(nn.AddBias(nn.Linear(xs[0], self.weights_xh), self.bias_h))
+
+        for x_t in xs[1:]:
+            h_t = nn.ReLU(nn.AddBias(nn.Add(nn.Linear(h_t, self.weights_hh), nn.Linear(x_t, self.weights_xh)), self.bias_h))
+
+        output_layer = nn.AddBias(nn.Linear(h_t, self.weights_out), self.bias_out)
+
+        return output_layer
 
     def get_loss(self, xs, y):
         """
@@ -277,10 +285,33 @@ class LanguageIDModel(object):
             y: a node with shape (batch_size x 5)
         Returns: a loss node
         """
-        "*** YOUR CODE HERE ***"
+        predictions = self.run(xs)
+        loss = nn.SoftmaxLoss(predictions, y)
+        return loss
 
     def train(self, dataset):
         """
         Trains the model.
         """
-        "*** YOUR CODE HERE ***"
+        max_epochs = 20
+        target_accuracy = 0.85
+        batch_size = 32
+        count=0
+        for epoch in range(max_epochs):
+            for xs, y in dataset.iterate_forever(batch_size):
+                loss = self.get_loss(xs, y)
+                gradients = nn.gradients(loss, [self.weights_hh, self.weights_xh, self.bias_h, self.weights_out, self.bias_out])
+
+                self.weights_hh.update(gradients[0], -self.learning_rate)
+                self.weights_xh.update(gradients[1], -self.learning_rate)
+                self.bias_h.update(gradients[2], -self.learning_rate)
+                self.weights_out.update(gradients[3], -self.learning_rate)
+                self.bias_out.update(gradients[4], -self.learning_rate)
+                count+=1
+                if(count==1000):
+                    count=0
+                    break  
+            validation_accuracy = dataset.get_validation_accuracy()
+            if validation_accuracy >= target_accuracy:
+                break
+
